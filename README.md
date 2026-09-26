@@ -82,11 +82,8 @@ nats object add assets && nats object put assets ./README.md
 Then either use the dev host, or install into DBX: `npm run package`, open DBX → Plugin Center → Settings,
 enable development-only unsigned packages, install the `.dbxp`, and create a **NATS** connection to `localhost:4222`.
 
-> **`dbx-plugin dev` and newer Go modules.** CLI 0.1.9's dev host writes a `go.work` declaring `go 1.22`,
-> so Go builds of modules that need a newer Go fail with *"module . listed in go.work file requires go >= 1.26.0"*.
-> `dbx-plugin package` is unaffected (it builds with `GOWORK=off`). Until that is fixed upstream, run the dev host
-> with a patched runtime: copy the CLI's `dev-runtime/` folder, change `go 1.22` to `go 1.26.0` in `runtime.mjs`,
-> and start with `DBX_PLUGIN_DEV_RUNTIME=/path/to/dev-runtime/runtime.mjs dbx-plugin dev --path .`.
+`npm run dev` goes through `scripts/dev.mjs`: plugin CLI 0.1.9's dev host writes a `go.work` pinned to `go 1.22`,
+which fails for this module, so the script runs the dev host from a patched copy that uses the Go version in `backend/go.mod`.
 
 Connection form fields use `select`, not `radio`: DBX desktop does not render `radio` fields (the dev host does).
 

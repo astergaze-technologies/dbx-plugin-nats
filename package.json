@@ -7,7 +7,7 @@
     "build:watch": "vite build --watch",
     "typecheck": "vue-tsc --noEmit",
     "package": "npm run build && dbx-plugin package .",
-    "dev": "dbx-plugin dev --path . --port 5190"
+    "dev": "node scripts/dev.mjs"
   },
   "dependencies": {
     "vue": "^3.5.43"
