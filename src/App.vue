@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import AppIcon from "./components/AppIcon.vue";
 import DialogHost from "./components/DialogHost.vue";
 import NavigatorTree, { type NavSection } from "./components/NavigatorTree.vue";
@@ -14,6 +15,8 @@ import ServicesView from "./views/services/ServicesView.vue";
 import StreamsView from "./views/streams/StreamsView.vue";
 
 defineProps<{ inDbx: boolean }>();
+
+const navOpen = ref(true);
 
 const count = (n: number) => (n ? n.toLocaleString() : "");
 const byLabel = <T extends { label: string }>(items: T[]) => items.sort((a, b) => a.label.localeCompare(b.label));
@@ -48,10 +51,14 @@ const sections: NavSection[] = [
 <template>
   <div v-if="!inDbx" class="empty">This page must be opened inside DBX.</div>
   <div v-else-if="!session.connectionId" class="empty">Open a saved NATS connection from the sidebar to use this workbench.</div>
-  <div v-else :key="session.connectionId" class="layout">
-    <NavigatorTree :sections="sections" />
+  <div v-else :key="session.connectionId" class="layout" :class="{ 'nav-hidden': !navOpen }">
+    <NavigatorTree v-show="navOpen" id="nats-navigator" :sections="sections" />
     <main class="workspace">
       <div class="tab-bar" role="tablist">
+        <button type="button" class="nav-collapse" :aria-label="navOpen ? 'Hide navigator' : 'Show navigator'"
+          :title="navOpen ? 'Hide navigator' : 'Show navigator'" :aria-expanded="navOpen" aria-controls="nats-navigator" @click="navOpen = !navOpen">
+          <AppIcon :name="navOpen ? 'panelClose' : 'panelOpen'" />
+        </button>
         <div v-for="tab in workspace.tabs" :key="tab.key" class="tab-wrap">
           <button type="button" role="tab" class="tab" :aria-selected="workspace.active === tab.id"
             :tabindex="workspace.active === tab.id ? 0 : -1" @click="workspace.active = tab.id">

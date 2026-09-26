@@ -33,6 +33,10 @@ code, pre, .mono { font-family: var(--font-mono, ui-monospace, monospace); font-
 
 /* layout: navigator | workspace (tab bar + panels) */
 .layout { display: grid; grid-template-columns: var(--nav-width) minmax(0, 1fr); height: 100%; }
+.layout.nav-hidden { grid-template-columns: minmax(0, 1fr); }
+.nav-collapse { display: grid; place-items: center; align-self: center; width: 28px; height: 28px; margin-right: 4px; border: 0; border-radius: 6px; background: none; color: var(--muted-fg); cursor: pointer; flex-shrink: 0; }
+.nav-collapse:hover { background: var(--muted); color: var(--fg); }
+.nav-collapse:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .navigator { border-right: 1px solid var(--border); background: var(--muted); padding: 8px; overflow: auto; }
 .workspace { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .tab-bar { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
