@@ -64,12 +64,11 @@ The workbench iframe's CSP allows only inline and same-origin classic scripts, s
 Requirements: Go 1.26+ and Node.js 22+.
 
 ```bash
-cd frontend
-npm install                            # also installs the DBX plugin CLI locally
-npm run package                        # typecheck + bundle UI, build sidecar -> ../dist/com.astergaze.nats-<version>-<target>.dbxp
-npm run dev                            # browser dev host on :5190 with the real sidecar (rebuilds the UI on change)
-cd ..
-cd backend && go test -race ./...      # unit + integration tests (embedded nats-server)
+make install   # frontend deps (incl. the DBX plugin CLI) + Go modules
+make dev       # browser dev host on :5190 with the real sidecar, rebuilding on change
+make package   # typecheck + bundle UI, build sidecar -> dist/com.astergaze.nats-<version>-<target>.dbxp
+make check     # gofmt, go vet, UI typecheck, Go tests (-race), UI build
+make           # list every target
 ```
 
 ### Try it against a local server
@@ -82,10 +81,10 @@ nats kv add config && nats kv put config feature.dark_mode on
 nats object add assets && nats object put assets ./README.md
 ```
 
-Then either use the dev host, or install into DBX: `npm run package` (in `frontend/`), open DBX → Plugin Center → Settings,
+Then either use the dev host, or install into DBX: `make package`, open DBX → Plugin Center → Settings,
 enable development-only unsigned packages, install the `.dbxp`, and create a **NATS** connection to `localhost:4222`.
 
-`npm run dev` goes through `frontend/dev.mjs`: plugin CLI 0.1.9's dev host writes a `go.work` pinned to `go 1.22`,
+`make dev` goes through `frontend/dev.mjs`: plugin CLI 0.1.9's dev host writes a `go.work` pinned to `go 1.22`,
 which fails for this module, so the script runs the dev host from a patched copy that uses the Go version in `backend/go.mod`.
 
 Connection form fields use `select`, not `radio`: DBX desktop does not render `radio` fields (the dev host does).
