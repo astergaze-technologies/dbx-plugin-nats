@@ -8,3 +8,4 @@
 /backend/dbx-plugin-nats
 /node_modules/
 /ui/app.js
+/ui/app.css

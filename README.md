@@ -1,75 +1,87 @@
 # NATS for DBX
 
-A [DBX](https://dbxio.com) plugin for [NATS](https://nats.io) servers: browse JetStream streams and their messages, key-value buckets, publish and request-reply, and watch subjects live — inside DBX.
+A [DBX](https://dbxio.com) plugin for [NATS](https://nats.io) servers: JetStream streams, consumers, key-value buckets, object stores, micro services, publish/request and live subscriptions — inside DBX.
 
-Plugin ID `com.astergaze.nats` · publisher `astergaze` · Go sidecar + sandboxed workbench UI.
+Plugin ID `com.astergaze.nats` · publisher `astergaze` · Go sidecar + Vue workbench.
 
 ## Features
 
-| Tab | What it does |
-| --- | --- |
-| **Overview** | Server name, version, cluster, TLS, RTT, max payload; JetStream storage/memory used against account limits. |
-| **Streams** | Filterable list of streams; open one to read its messages newest first, with paging. JSON payloads are pretty-printed, binary payloads shown as base64. |
-| **Key-Value** | Buckets with entries, size, history and TTL; filter keys and read a key's latest value and revision. |
-| **Publish** | Publish a message with headers, or send a request and show the reply. |
-| **Subscribe** | Several live subscriptions at once (wildcards and queue groups), pause, clear, per-subscription counts. |
+The workbench mirrors DBX's own layout: a navigator tree (Server, Streams, Key-Value, Object Store, Services, Publish, Subscribe) and closable tabs.
 
-JetStream and KV access is **read-only**: the plugin never creates, edits or deletes streams, consumers, buckets or keys. Servers without JetStream still get Overview, Publish and Subscribe.
+| Area | Read | Write (disabled on read-only connections) |
+| --- | --- | --- |
+| **Server** | name, version, cluster, TLS, RTT; JetStream usage against account limits | — |
+| **Streams** | messages newest first with paging, consumers (pending, ack pending, redelivered), configuration | create, edit, purge, delete stream; delete message or consumer |
+| **Key-Value** | keys, value history per key, live watch | create/delete bucket, put, delete key |
+| **Object Store** | objects, preview | create/delete store, upload (≤ 4 MiB), delete object |
+| **Services** | NATS micro services via `$SRV.INFO` / `$SRV.STATS` with per-endpoint stats | — |
+| **Publish / Subscribe** | live subscriptions (wildcards, queue groups) | publish, request-reply |
+
+Destructive actions ask for confirmation; deleting or purging a stream, bucket or store requires typing its name.
+Streams backing KV buckets and object stores (`KV_*`, `OBJ_*`) are hidden unless "Show KV / Object Store streams" is ticked.
+
+**Browse as files** opens DBX's native file browser (`nats:///streams|kv|objects/...`) through a filesystem provider.
 
 ### Connection options
 
 - Host / port (DBX SSH tunnels and proxies are honoured — the sidecar dials the endpoint DBX hands it)
 - Authentication: none, user/password, token, or a `.creds` file (JWT + seed)
 - TLS, with an optional "skip verification" for self-signed test servers
-- Connect timeout
+- Connect timeout; DBX's read-only flag is enforced by the sidecar
 
 Passwords, tokens and credentials are stored in DBX's secret store, never in the connection JSON.
 
 ### Limits (deliberate)
 
-- Live subscriptions forward at most **100 messages/second** each; the excess is counted and shown as "dropped" rather than flooding DBX. The UI keeps the latest 500.
-- Message bodies over 64 KiB are truncated in the UI (the size is still shown).
-- A stream page holds up to 200 messages; key listings stop at 1,000 keys.
+- Live subscriptions and KV watches forward at most **100 messages/second** each; the excess is counted as "dropped". The UI keeps the latest 500.
+- Message bodies over 64 KiB are truncated in the UI (the size is still shown); key listings stop at 1,000 keys.
 - Request-reply timeouts are capped at 60 s.
 
 ## Architecture
 
 ```
-manifest.json            connection form, workbench, permissions (host.events only)
-ui/index.html            workbench: vanilla JS, DBX UI kit + theme tokens, no build step
+manifest.json                 connection form, workbench, filesystem provider, permissions
+src/                          workbench UI (Vue 3 + TypeScript), built by Vite into ui/app.js + ui/app.css
+  api/                        DBX bridge (invoke, events) and response types
+  components/                 navigator, data table, dialogs, message card, buttons
+  stores/                     open tabs, dialogs, navigation helpers
+  views/<area>/               one folder per navigator section
+ui/index.html                 workbench shell
 backend/
-  main.go                DBX protocol wiring (JSON-RPC over stdio via the DBX Go SDK)
-  lifecycle.go           DBX connection payload -> dial config
-  internal/natsx/        all NATS logic, no SDK dependency, tested against an in-process nats-server
-  third_party/dbx-plugin-sdk/   vendored DBX Go SDK (see its README)
+  main.go                     DBX protocol wiring (JSON-RPC over stdio via the DBX Go SDK)
+  internal/rpc/               method routing, params, lifecycle, filesystem provider
+  internal/natsx/             NATS logic, one file per primitive, tested against an in-process nats-server
+  third_party/dbx-plugin-sdk/ vendored DBX Go SDK (see its README)
 ```
 
-Sidecar methods (called by the workbench with `connectionId`):
+Sidecar methods are registered in `backend/internal/rpc/nats.go`; events are `nats/message`, `nats/kvChange`, `nats/feedClosed` and `nats/connectionChanged`.
 
-| Method | Params | Result |
-| --- | --- | --- |
-| `nats/overview` | — | server info, JetStream usage |
-| `nats/streams` | — | `{ streams }` |
-| `nats/streamMessages` | `stream`, `before?`, `limit?` | `{ messages, nextBefore }` newest first |
-| `nats/kvBuckets` | — | `{ buckets }` |
-| `nats/kvKeys` | `bucket` | `{ keys, truncated }` |
-| `nats/kvGet` | `bucket`, `key` | value, revision, operation |
-| `nats/publish` | `subject`, `data`, `headers?` | `{ ok }` |
-| `nats/request` | `subject`, `data`, `headers?`, `timeoutMs?` | reply |
-| `nats/subscribe` | `subject`, `queue?` | `{ subscriptionId }` |
-| `nats/unsubscribe` | `subscriptionId` | `{ ok }` |
-
-Events: `nats/message`, `nats/subscriptionClosed`, `nats/connectionChanged`.
+The workbench iframe's CSP allows only inline and same-origin classic scripts, so the UI is bundled into a single IIFE (no ES module imports at runtime). It is also sandboxed without `allow-forms`: use click/Enter handlers, never `<form>` submission.
 
 ## Develop
 
 Requirements: Go 1.26+, Node.js 22+ and the DBX plugin CLI (`npm i -g @dbx-app/plugin-cli`, or use `npx @dbx-app/plugin-cli`).
 
 ```bash
-cd backend && go test -race ./...     # unit + integration tests (embedded nats-server)
+npm install
+npm run build                          # typecheck + bundle the UI into ui/
+cd backend && go test -race ./...      # unit + integration tests (embedded nats-server)
 dbx-plugin package .                   # dist/com.astergaze.nats-<version>-<target>.dbxp
-dbx-plugin dev --path . --port 5190    # browser dev host with the real sidecar
+dbx-plugin dev --path . --port 5190    # browser dev host with the real sidecar (rebuilds the UI on change)
 ```
+
+### Try it against a local server
+
+```bash
+docker run --rm -p 4222:4222 nats:latest -js
+nats stream add ORDERS --subjects 'orders.>' --defaults
+nats pub orders.created '{"id":1}' --count 20
+nats kv add config && nats kv put config feature.dark_mode on
+nats object add assets && nats object put assets ./README.md
+```
+
+Then either use the dev host, or install into DBX: `dbx-plugin package .`, open DBX → Plugin Center → Settings,
+enable development-only unsigned packages, install the `.dbxp`, and create a **NATS** connection to `localhost:4222`.
 
 > **`dbx-plugin dev` and newer Go modules.** CLI 0.1.9's dev host writes a `go.work` declaring `go 1.22`,
 > so Go builds of modules that need a newer Go fail with *"module . listed in go.work file requires go >= 1.26.0"*.
@@ -77,8 +89,7 @@ dbx-plugin dev --path . --port 5190    # browser dev host with the real sidecar
 > with a patched runtime: copy the CLI's `dev-runtime/` folder, change `go 1.22` to `go 1.26.0` in `runtime.mjs`,
 > and start with `DBX_PLUGIN_DEV_RUNTIME=/path/to/dev-runtime/runtime.mjs dbx-plugin dev --path .`.
 
-The workbench iframe is sandboxed without `allow-forms`: use click/Enter handlers, never `<form>` submission.
-All server data is rendered with `textContent`.
+Connection form fields use `select`, not `radio`: DBX desktop does not render `radio` fields (the dev host does).
 
 Keep `version` in `backend/main.go` equal to `manifest.json` — DBX rejects a sidecar whose identity does not match.
 

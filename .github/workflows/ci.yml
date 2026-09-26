@@ -26,5 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Typecheck and build UI
+        run: npm ci && npm run build
       - name: Package candidate (validates manifest)
         run: npx -y @dbx-app/plugin-cli@0.1.9 package .
