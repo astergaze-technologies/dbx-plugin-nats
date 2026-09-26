@@ -9,7 +9,6 @@
   --danger: var(--color-destructive, #b91c1c);
   --success: var(--color-success, #15803d);
   --radius: var(--radius-md, 8px);
-  --nav-width: 240px;
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
   font-variant-numeric: tabular-nums;
 }
@@ -31,32 +30,16 @@ code, pre, .mono { font-family: var(--font-mono, ui-monospace, monospace); font-
 .ok { color: var(--success); }
 .grow { flex: 1; min-width: 0; }
 
-/* layout: navigator | workspace (tab bar + panels) */
-.layout { display: grid; grid-template-columns: var(--nav-width) minmax(0, 1fr); height: 100%; }
-.layout.nav-hidden { grid-template-columns: minmax(0, 1fr); }
-.nav-collapse { display: grid; place-items: center; align-self: center; width: 28px; height: 28px; margin-right: 4px; border: 0; border-radius: 6px; background: none; color: var(--muted-fg); cursor: pointer; flex-shrink: 0; }
-.nav-collapse:hover { background: var(--muted); color: var(--fg); }
-.nav-collapse:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
-.navigator { border-right: 1px solid var(--border); background: var(--muted); padding: 8px; overflow: auto; }
-.workspace { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+/* layout: section bar, tab bar, panels */
+.workspace { display: flex; flex-direction: column; height: 100%; min-width: 0; }
+.section-bar { display: flex; gap: 2px; padding: 6px 8px; border-bottom: 1px solid var(--border); background: var(--muted); overflow-x: auto; flex-shrink: 0; }
+.section { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 0; border-radius: 6px; background: none; color: var(--muted-fg); cursor: pointer; white-space: nowrap; font-weight: 500; }
+.section:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); color: var(--fg); }
+.section[aria-current="page"] { background: var(--bg); color: var(--fg); box-shadow: 0 0 0 1px var(--border); }
+.section:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .tab-bar { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
 .tab-body-host { flex: 1; overflow: auto; }
 .tab-panel { padding: 16px; }
-
-/* navigator tree */
-.nav-filter { margin-bottom: 8px; }
-.nav-tree, .nav-tree ul { list-style: none; margin: 0; padding: 0; }
-.nav-tree ul { padding-left: 18px; }
-.nav-row { display: flex; align-items: center; }
-.nav-toggle { width: 20px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; color: var(--muted-fg); cursor: pointer; flex-shrink: 0; }
-.nav-toggle svg { transition: transform 0.12s; }
-.nav-toggle.open svg { transform: rotate(90deg); }
-.nav-label, .nav-leaf { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 0; background: none; border-radius: 6px; cursor: pointer; text-align: left; }
-.nav-label { font-weight: 500; }
-.nav-label:hover, .nav-leaf:hover { background: color-mix(in srgb, var(--fg) 7%, transparent); }
-.nav-leaf-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nav-count { margin-left: auto; color: var(--muted-fg); font-size: 11px; font-weight: 400; }
-.nav-hint { padding: 4px 8px; color: var(--muted-fg); font-size: 12px; }
 
 /* tabs */
 .tab-wrap { display: flex; align-items: center; border-bottom: 2px solid transparent; }
@@ -143,8 +126,4 @@ pre { margin: 0; padding: 10px; background: var(--muted); border-radius: var(--r
 :where(.dbx-badge) { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; background: var(--muted); color: var(--muted-fg); font-size: 11px; font-weight: 500; }
 .toolbar .dbx-input { width: auto; flex: 1; min-width: 160px; }
 
-@media (max-width: 720px) {
-  .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .navigator { border-right: 0; border-bottom: 1px solid var(--border); max-height: 40vh; }
-}
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

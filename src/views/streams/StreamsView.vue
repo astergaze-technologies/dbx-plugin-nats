@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { invoke } from "../../api/bridge";
 import type { StreamSummary } from "../../api/types";
 import DataTable, { type Column } from "../../components/DataTable.vue";
@@ -8,11 +8,13 @@ import PageHeader from "../../components/PageHeader.vue";
 import WriteButton from "../../components/WriteButton.vue";
 import { bytes, num } from "../../lib/format";
 import { useLoader } from "../../lib/useLoader";
+import { workspace } from "../../stores/workspace";
 import { openStream } from "../../stores/navigation";
 import { streamForm } from "./streamForm";
 
 const showSystem = ref(false);
 const { data, error, load } = useLoader(async () => (await invoke<{ streams: StreamSummary[] }>("nats/streams")).streams);
+watch(() => workspace.listVersion.streams, load);
 const rows = computed(() => (data.value ?? []).filter((s) => showSystem.value || !s.system));
 
 const columns: Column<StreamSummary>[] = [

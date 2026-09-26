@@ -2,7 +2,7 @@ import { invoke } from "../../api/bridge";
 import type { StreamSpec } from "../../api/types";
 import { formDialog, type FormField } from "../../stores/dialogs";
 import { openStream } from "../../stores/navigation";
-import { refreshNav } from "../../stores/workspace";
+import { refreshList } from "../../stores/workspace";
 
 const fields = (spec: Partial<StreamSpec> = {}, editing = false): FormField[] => [
   { key: "name", label: "Name", value: spec.name, required: true, disabled: editing },
@@ -28,7 +28,7 @@ export function streamForm(existing?: StreamSpec) {
       const subjects = String(v.subjects).split(",").map((s) => s.trim()).filter(Boolean);
       const streamSpec = { ...existing, ...v, subjects } as StreamSpec;
       await invoke("nats/streamSave", { streamSpec, update: !!existing });
-      refreshNav("streams");
+      refreshList("streams");
       openStream(streamSpec.name, true);
     },
   });

@@ -10,7 +10,7 @@ import WriteButton from "../../components/WriteButton.vue";
 import { bytes, num, time } from "../../lib/format";
 import { useLoader } from "../../lib/useLoader";
 import { confirmAction } from "../../stores/dialogs";
-import { closeTab, refreshNav } from "../../stores/workspace";
+import { closeTab, refreshList } from "../../stores/workspace";
 import StreamConsumers from "./StreamConsumers.vue";
 import StreamMessages from "./StreamMessages.vue";
 import { streamForm } from "./streamForm";
@@ -42,7 +42,7 @@ async function purge() {
   if (!ok) return;
   try {
     await invoke("nats/streamPurge", { stream: props.name });
-    refreshNav("streams");
+    refreshList("streams");
     refresh();
   } catch (err) {
     actionError.value = err;
@@ -55,7 +55,7 @@ async function remove() {
   if (!ok) return;
   try {
     await invoke("nats/streamDelete", { stream: props.name });
-    refreshNav("streams");
+    refreshList("streams");
     closeTab(`stream:${props.name}`);
   } catch (err) {
     actionError.value = err;

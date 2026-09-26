@@ -1,8 +1,8 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import { plugin, session, startEvents } from "./api/bridge";
-import ServerView from "./views/server/ServerView.vue";
 import { openTab, resetTabs } from "./stores/workspace";
+import ServerView from "./views/server/ServerView.vue";
 import "./styles.css";
 
 function start(connectionId: string) {
@@ -10,7 +10,7 @@ function start(connectionId: string) {
   resetTabs();
   session.connectionId = connectionId;
   session.readOnly = false;
-  if (connectionId) openTab({ id: "server", title: "Server", icon: "server", component: ServerView, closable: false });
+  if (connectionId) openTab({ id: "server", title: "Server", icon: "server", component: ServerView, section: true });
 }
 
 createApp(App, { inDbx: !!plugin }).mount("#app");

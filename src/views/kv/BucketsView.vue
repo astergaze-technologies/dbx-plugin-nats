@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from "vue";
 import { invoke } from "../../api/bridge";
 import type { Bucket } from "../../api/types";
 import DataTable, { type Column } from "../../components/DataTable.vue";
@@ -7,11 +8,12 @@ import PageHeader from "../../components/PageHeader.vue";
 import WriteButton from "../../components/WriteButton.vue";
 import { bytes, num } from "../../lib/format";
 import { useLoader } from "../../lib/useLoader";
+import { refreshList, workspace } from "../../stores/workspace";
 import { formDialog } from "../../stores/dialogs";
 import { openBucket } from "../../stores/navigation";
-import { refreshNav } from "../../stores/workspace";
 
 const { data, error, load } = useLoader(async () => (await invoke<{ buckets: Bucket[] }>("nats/kvBuckets")).buckets);
+watch(() => workspace.listVersion.kv, load);
 
 const columns: Column<Bucket>[] = [
   { key: "bucket", label: "Bucket" },
@@ -35,8 +37,7 @@ function create() {
     submitLabel: "Create",
     async onSubmit(bucketSpec) {
       await invoke("nats/kvBucketCreate", { bucketSpec });
-      refreshNav("kv");
-      load();
+      refreshList("kv");
       openBucket(String(bucketSpec.bucket));
     },
   });

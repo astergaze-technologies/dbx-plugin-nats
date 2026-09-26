@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from "vue";
 import { invoke } from "../../api/bridge";
 import type { ObjectStore } from "../../api/types";
 import DataTable, { type Column } from "../../components/DataTable.vue";
@@ -7,11 +8,12 @@ import PageHeader from "../../components/PageHeader.vue";
 import WriteButton from "../../components/WriteButton.vue";
 import { bytes } from "../../lib/format";
 import { useLoader } from "../../lib/useLoader";
+import { refreshList, workspace } from "../../stores/workspace";
 import { formDialog } from "../../stores/dialogs";
 import { openStore } from "../../stores/navigation";
-import { refreshNav } from "../../stores/workspace";
 
 const { data, error, load } = useLoader(async () => (await invoke<{ stores: ObjectStore[] }>("nats/objectStores")).stores);
+watch(() => workspace.listVersion.objects, load);
 
 const columns: Column<ObjectStore>[] = [
   { key: "store", label: "Store" },
@@ -28,8 +30,7 @@ function create() {
     submitLabel: "Create",
     async onSubmit(v) {
       await invoke("nats/objectStoreCreate", v);
-      refreshNav("objects");
-      load();
+      refreshList("objects");
       openStore(String(v.store));
     },
   });

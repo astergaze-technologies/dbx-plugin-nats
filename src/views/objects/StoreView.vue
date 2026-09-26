@@ -10,7 +10,7 @@ import WriteButton from "../../components/WriteButton.vue";
 import { bytes, time } from "../../lib/format";
 import { useLoader } from "../../lib/useLoader";
 import { confirmAction } from "../../stores/dialogs";
-import { closeTab, refreshNav } from "../../stores/workspace";
+import { closeTab, refreshList } from "../../stores/workspace";
 import ObjectPreview from "./ObjectPreview.vue";
 
 const MAX_UPLOAD = 4 * 1024 * 1024; // matches the backend limit
@@ -76,7 +76,7 @@ async function removeStore() {
   if (!ok) return;
   try {
     await invoke("nats/objectStoreDelete", { store: props.store });
-    refreshNav("objects");
+    refreshList("objects");
     closeTab(`objects:${props.store}`);
   } catch (err) {
     error.value = err;

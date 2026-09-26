@@ -6,7 +6,7 @@ Plugin ID `com.astergaze.nats` · publisher `astergaze` · Go sidecar + Vue work
 
 ## Features
 
-The workbench mirrors DBX's own layout: a navigator tree (Server, Streams, Key-Value, Object Store, Services, Publish, Subscribe) and closable tabs.
+The workbench sits next to DBX's sidebar with no extra column: a section bar (Server, Streams, Key-Value, Object Store, Services, Publish, Subscribe) on top, and each stream, bucket or store you open gets its own closable tab. DBX plugins cannot add nodes to the DBX sidebar itself.
 
 | Area | Read | Write (disabled on read-only connections) |
 | --- | --- | --- |
@@ -43,9 +43,9 @@ Passwords, tokens and credentials are stored in DBX's secret store, never in the
 manifest.json                 connection form, workbench, filesystem provider, permissions
 src/                          workbench UI (Vue 3 + TypeScript), built by Vite into ui/app.js + ui/app.css
   api/                        DBX bridge (invoke, events) and response types
-  components/                 navigator, data table, dialogs, message card, buttons
+  components/                 data table, dialogs, message card, buttons
   stores/                     open tabs, dialogs, navigation helpers
-  views/<area>/               one folder per navigator section
+  views/<area>/               one folder per section
 ui/index.html                 workbench shell
 backend/
   main.go                     DBX protocol wiring (JSON-RPC over stdio via the DBX Go SDK)

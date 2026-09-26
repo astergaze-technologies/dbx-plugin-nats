@@ -6,7 +6,7 @@ import PageHeader from "../../components/PageHeader.vue";
 import SegmentedControl from "../../components/SegmentedControl.vue";
 import WriteButton from "../../components/WriteButton.vue";
 import { confirmAction, formDialog } from "../../stores/dialogs";
-import { closeTab, refreshNav } from "../../stores/workspace";
+import { closeTab, refreshList } from "../../stores/workspace";
 import KeyBrowser from "./KeyBrowser.vue";
 import KeyWatch from "./KeyWatch.vue";
 
@@ -33,7 +33,7 @@ async function removeBucket() {
   if (!ok) return;
   try {
     await invoke("nats/kvBucketDelete", { bucket: props.bucket });
-    refreshNav("kv");
+    refreshList("kv");
     closeTab(`kv:${props.bucket}`);
   } catch (err) {
     error.value = err;
