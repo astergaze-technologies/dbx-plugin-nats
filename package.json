@@ -1,0 +1,12 @@
+{
+  "name": "dbx-plugin-nats-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --format=iife --target=es2022 --outfile=ui/app.js",
+    "build:watch": "npm run build -- --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.10"
+  }
+}

@@ -6,3 +6,5 @@
 
 # Go build output
 /backend/dbx-plugin-nats
+/node_modules/
+/ui/app.js
