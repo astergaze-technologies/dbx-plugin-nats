@@ -1,0 +1,187 @@
+{
+  "$schema": "https://raw.githubusercontent.com/t8y2/dbx/plugin-sdk-v1/plugins/manifest.schema.json",
+  "manifest_version": 1,
+  "id": "com.astergaze.nats",
+  "name": "NATS",
+  "version": "0.1.0",
+  "publisher": "astergaze",
+  "description": "Browse NATS servers: JetStream streams and messages, key-value buckets, publish, request-reply and live subscriptions.",
+  "icon": "assets/plugin.svg",
+  "source": "https://github.com/Astergaze-Solutions/dbx-plugin-nats",
+  "homepage": "https://github.com/Astergaze-Solutions/dbx-plugin-nats",
+  "engines": {
+    "dbx": ">=0.5.68",
+    "host_api": "1"
+  },
+  "permissions": ["host.events"],
+  "entrypoints": {
+    "backend": {
+      "executable": "bin/dbx-plugin-nats"
+    },
+    "ui": {
+      "root": "ui",
+      "entry": "ui/index.html"
+    }
+  },
+  "contributions": [
+    {
+      "type": "connection-provider",
+      "id": "com.astergaze.nats.connection",
+      "label": "NATS",
+      "icon": "assets/plugin.svg",
+      "database_type": "nats",
+      "description": "Connect to a NATS server or cluster node.",
+      "fields": [
+        {
+          "key": "display_name",
+          "label": "Connection name",
+          "type": "text",
+          "default": "NATS",
+          "binding": "name",
+          "required": true
+        },
+        {
+          "key": "host",
+          "label": "Host",
+          "type": "text",
+          "default": "localhost",
+          "placeholder": "nats.example.com",
+          "binding": "host",
+          "required": true
+        },
+        {
+          "key": "port",
+          "label": "Port",
+          "type": "number",
+          "default": 4222,
+          "binding": "port",
+          "required": true
+        },
+        {
+          "key": "auth",
+          "label": "Authentication",
+          "type": "radio",
+          "default": "none",
+          "binding": "config",
+          "options": [
+            { "label": "None", "value": "none" },
+            { "label": "User / password", "value": "password" },
+            { "label": "Token", "value": "token" },
+            { "label": "Credentials file", "value": "creds" }
+          ]
+        },
+        {
+          "key": "username",
+          "label": "Username",
+          "type": "text",
+          "binding": "username",
+          "visible_when": { "field": "auth", "one_of": ["password"] },
+          "required_when": { "field": "auth", "one_of": ["password"] }
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "type": "password",
+          "binding": "password",
+          "visible_when": { "field": "auth", "one_of": ["password"] }
+        },
+        {
+          "key": "token",
+          "label": "Token",
+          "type": "password",
+          "binding": "secret",
+          "visible_when": { "field": "auth", "one_of": ["token"] },
+          "required_when": { "field": "auth", "one_of": ["token"] }
+        },
+        {
+          "key": "creds_path",
+          "label": "Credentials file",
+          "type": "text",
+          "binding": "config",
+          "placeholder": "~/.nats/user.creds",
+          "description": "NATS user credentials (.creds) containing a JWT and seed.",
+          "picker": { "kind": "file", "accept": [".creds"], "content_field": "creds" },
+          "visible_when": { "field": "auth", "one_of": ["creds"] }
+        },
+        {
+          "key": "creds",
+          "label": "Credentials content",
+          "type": "textarea",
+          "binding": "secret",
+          "description": "Filled automatically in the browser; you can also paste the .creds content here.",
+          "visible_when": { "field": "auth", "one_of": ["creds"] }
+        },
+        {
+          "key": "tls",
+          "label": "Use TLS",
+          "type": "boolean",
+          "default": false,
+          "binding": "config"
+        },
+        {
+          "key": "tls_insecure",
+          "label": "Skip TLS certificate verification",
+          "type": "boolean",
+          "default": false,
+          "binding": "config",
+          "description": "Only for self-signed test servers.",
+          "visible_when": { "field": "tls", "one_of": [true] }
+        },
+        {
+          "key": "connect_timeout_secs",
+          "label": "Connect timeout (seconds)",
+          "type": "number",
+          "default": 10,
+          "binding": "config"
+        }
+      ],
+      "workbench": "com.astergaze.nats.workbench",
+      "capabilities": ["test", "connect", "disconnect"]
+    },
+    {
+      "type": "workbench",
+      "id": "com.astergaze.nats.workbench",
+      "label": "NATS",
+      "description": "Server overview, streams, key-value buckets, publish and live subscribe.",
+      "icon": "assets/plugin.svg"
+    }
+  ],
+  "localizations": {
+    "zh-CN": {
+      "name": "NATS",
+      "description": "浏览 NATS 服务器：JetStream 流与消息、键值存储、发布、请求-响应和实时订阅。",
+      "contributions": {
+        "com.astergaze.nats.connection": {
+          "label": "NATS",
+          "description": "连接到 NATS 服务器或集群节点。",
+          "fields": {
+            "display_name": { "label": "连接名称" },
+            "host": { "label": "主机" },
+            "port": { "label": "端口" },
+            "auth": {
+              "label": "认证方式",
+              "options": {
+                "none": "无",
+                "password": "用户名 / 密码",
+                "token": "令牌",
+                "creds": "凭据文件"
+              }
+            },
+            "username": { "label": "用户名" },
+            "password": { "label": "密码" },
+            "token": { "label": "令牌" },
+            "creds_path": { "label": "凭据文件", "description": "包含 JWT 和种子的 NATS 用户凭据（.creds）。" },
+            "creds": { "label": "凭据内容", "description": "浏览器中会自动填写；也可以直接粘贴 .creds 内容。" },
+            "tls": { "label": "使用 TLS" },
+            "tls_insecure": { "label": "跳过 TLS 证书校验", "description": "仅用于自签名测试服务器。" },
+            "connect_timeout_secs": { "label": "连接超时（秒）" }
+          }
+        },
+        "com.astergaze.nats.workbench": {
+          "label": "NATS",
+          "description": "服务器概览、流、键值存储、发布和实时订阅。"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: backend/go.sum
+      - name: Vet and test
+        working-directory: backend
+        run: |
+          test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+          go vet ./...
+          go test -race ./...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Package candidate (validates manifest)
+        run: npx -y @dbx-app/plugin-cli@0.1.9 package .

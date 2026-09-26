@@ -1,0 +1,8 @@
+/dist/
+/.dbx-dev/
+.dbx-repository-signing-key.env
+.DS_Store
+*.log
+
+# Go build output
+/backend/dbx-plugin-nats
