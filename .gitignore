@@ -7,5 +7,5 @@
 # Go build output
 /backend/dbx-plugin-nats
 /node_modules/
-/ui/app.js
-/ui/app.css
+# built by `npm run build` (CI builds it before packaging)
+/ui/

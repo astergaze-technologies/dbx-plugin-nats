@@ -41,12 +41,12 @@ Passwords, tokens and credentials are stored in DBX's secret store, never in the
 
 ```
 manifest.json                 connection form, workbench, filesystem provider, permissions
-src/                          workbench UI (Vue 3 + TypeScript), built by Vite into ui/app.js + ui/app.css
+src/                          workbench UI (Vue 3 + TypeScript); Vite builds it into ui/ (generated, not committed)
   api/                        DBX bridge (invoke, events) and response types
   components/                 data table, dialogs, message card, buttons
   stores/                     open tabs, dialogs, navigation helpers
   views/<area>/               one folder per section
-ui/index.html                 workbench shell
+public/index.html             workbench shell, copied into ui/ by the build
 backend/
   main.go                     DBX protocol wiring (JSON-RPC over stdio via the DBX Go SDK)
   internal/rpc/               method routing, params, lifecycle, filesystem provider
