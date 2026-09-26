@@ -7,16 +7,13 @@
   "publisher": "astergaze",
   "description": "Manage NATS servers: JetStream streams, consumers and messages, key-value buckets, object stores, services, publish, request-reply and live subscriptions.",
   "icon": "assets/plugin.svg",
-  "source": "https://github.com/Astergaze-Solutions/dbx-plugin-nats",
-  "homepage": "https://github.com/Astergaze-Solutions/dbx-plugin-nats",
+  "source": "https://github.com/astergaze-technologies/dbx-plugin-nats",
+  "homepage": "https://github.com/astergaze-technologies/dbx-plugin-nats",
   "engines": {
     "dbx": ">=0.5.68",
     "host_api": "1"
   },
-  "permissions": [
-    "host.events",
-    "host.filesystem"
-  ],
+  "permissions": ["host.events", "host.filesystem"],
   "entrypoints": {
     "backend": {
       "executable": "bin/dbx-plugin-nats"
@@ -92,15 +89,11 @@
           "binding": "username",
           "visible_when": {
             "field": "auth",
-            "one_of": [
-              "password"
-            ]
+            "one_of": ["password"]
           },
           "required_when": {
             "field": "auth",
-            "one_of": [
-              "password"
-            ]
+            "one_of": ["password"]
           }
         },
         {
@@ -110,9 +103,7 @@
           "binding": "password",
           "visible_when": {
             "field": "auth",
-            "one_of": [
-              "password"
-            ]
+            "one_of": ["password"]
           }
         },
         {
@@ -122,15 +113,11 @@
           "binding": "secret",
           "visible_when": {
             "field": "auth",
-            "one_of": [
-              "token"
-            ]
+            "one_of": ["token"]
           },
           "required_when": {
             "field": "auth",
-            "one_of": [
-              "token"
-            ]
+            "one_of": ["token"]
           }
         },
         {
@@ -142,16 +129,12 @@
           "description": "NATS user credentials (.creds) containing a JWT and seed.",
           "picker": {
             "kind": "file",
-            "accept": [
-              ".creds"
-            ],
+            "accept": [".creds"],
             "content_field": "creds"
           },
           "visible_when": {
             "field": "auth",
-            "one_of": [
-              "creds"
-            ]
+            "one_of": ["creds"]
           }
         },
         {
@@ -162,9 +145,7 @@
           "description": "Filled automatically in the browser; you can also paste the .creds content here.",
           "visible_when": {
             "field": "auth",
-            "one_of": [
-              "creds"
-            ]
+            "one_of": ["creds"]
           }
         },
         {
@@ -183,9 +164,7 @@
           "description": "Only for self-signed test servers.",
           "visible_when": {
             "field": "tls",
-            "one_of": [
-              true
-            ]
+            "one_of": [true]
           }
         },
         {
@@ -197,11 +176,7 @@
         }
       ],
       "workbench": "com.astergaze.nats.workbench",
-      "capabilities": [
-        "test",
-        "connect",
-        "disconnect"
-      ]
+      "capabilities": ["test", "connect", "disconnect"]
     },
     {
       "type": "workbench",
@@ -216,15 +191,9 @@
       "label": "NATS files",
       "description": "Browse key-value buckets, object stores and stream messages as files.",
       "icon": "assets/plugin.svg",
-      "schemes": [
-        "nats"
-      ],
+      "schemes": ["nats"],
       "root_uri": "nats:///",
-      "capabilities": [
-        "read",
-        "write",
-        "delete"
-      ]
+      "capabilities": ["read", "write", "delete"]
     }
   ],
   "localizations": {
