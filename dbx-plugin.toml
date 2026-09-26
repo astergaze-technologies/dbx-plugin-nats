@@ -9,5 +9,5 @@ binary = "dbx-plugin-nats"
 include = ["assets", "ui"]
 
 [dev]
-ui_build = ["npm", "run", "build"]
-ui_watch = ["npm", "run", "build:watch"]
+ui_build = ["npm", "--prefix", "frontend", "run", "build"]
+ui_watch = ["npm", "--prefix", "frontend", "run", "build:watch"]

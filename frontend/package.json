@@ -6,8 +6,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "build:watch": "vite build --watch",
     "typecheck": "vue-tsc --noEmit",
-    "package": "npm run build && dbx-plugin package .",
-    "dev": "node scripts/dev.mjs"
+    "package": "npm run build && dbx-plugin package ..",
+    "dev": "node dev.mjs"
   },
   "dependencies": {
     "vue": "^3.5.43"

@@ -41,12 +41,13 @@ Passwords, tokens and credentials are stored in DBX's secret store, never in the
 
 ```
 manifest.json                 connection form, workbench, filesystem provider, permissions
-src/                          workbench UI (Vue 3 + TypeScript); Vite builds it into ui/ (generated, not committed)
-  api/                        DBX bridge (invoke, events) and response types
-  components/                 data table, dialogs, message card, buttons
-  stores/                     open tabs, dialogs, navigation helpers
-  views/<area>/               one folder per section
-public/index.html             workbench shell, copied into ui/ by the build
+frontend/                     workbench UI (Vue 3 + TypeScript, own package.json); Vite builds it into ../ui/ (generated, not committed)
+  src/api/                    DBX bridge (invoke, events) and response types
+  src/components/             data table, dialogs, message card, buttons
+  src/stores/                 open tabs, dialogs, navigation helpers
+  src/views/<area>/           one folder per section
+  public/index.html           workbench shell, copied into ui/ by the build
+  dev.mjs                     dev host launcher (see below)
 backend/
   main.go                     DBX protocol wiring (JSON-RPC over stdio via the DBX Go SDK)
   internal/rpc/               method routing, params, lifecycle, filesystem provider
@@ -63,9 +64,11 @@ The workbench iframe's CSP allows only inline and same-origin classic scripts, s
 Requirements: Go 1.26+ and Node.js 22+.
 
 ```bash
+cd frontend
 npm install                            # also installs the DBX plugin CLI locally
-npm run package                        # typecheck + bundle UI, build sidecar -> dist/com.astergaze.nats-<version>-<target>.dbxp
+npm run package                        # typecheck + bundle UI, build sidecar -> ../dist/com.astergaze.nats-<version>-<target>.dbxp
 npm run dev                            # browser dev host on :5190 with the real sidecar (rebuilds the UI on change)
+cd ..
 cd backend && go test -race ./...      # unit + integration tests (embedded nats-server)
 ```
 
@@ -79,10 +82,10 @@ nats kv add config && nats kv put config feature.dark_mode on
 nats object add assets && nats object put assets ./README.md
 ```
 
-Then either use the dev host, or install into DBX: `npm run package`, open DBX → Plugin Center → Settings,
+Then either use the dev host, or install into DBX: `npm run package` (in `frontend/`), open DBX → Plugin Center → Settings,
 enable development-only unsigned packages, install the `.dbxp`, and create a **NATS** connection to `localhost:4222`.
 
-`npm run dev` goes through `scripts/dev.mjs`: plugin CLI 0.1.9's dev host writes a `go.work` pinned to `go 1.22`,
+`npm run dev` goes through `frontend/dev.mjs`: plugin CLI 0.1.9's dev host writes a `go.work` pinned to `go 1.22`,
 which fails for this module, so the script runs the dev host from a patched copy that uses the Go version in `backend/go.mod`.
 
 Connection form fields use `select`, not `radio`: DBX desktop does not render `radio` fields (the dev host does).
