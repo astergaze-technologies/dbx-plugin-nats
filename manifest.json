@@ -3,7 +3,7 @@
   "manifest_version": 1,
   "id": "com.astergaze.nats",
   "name": "NATS",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "publisher": "astergaze",
   "description": "Manage NATS servers: JetStream streams, consumers and messages, key-value buckets, object stores, services, publish, request-reply and live subscriptions.",
   "icon": "assets/plugin.svg",
