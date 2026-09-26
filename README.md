@@ -60,14 +60,13 @@ The workbench iframe's CSP allows only inline and same-origin classic scripts, s
 
 ## Develop
 
-Requirements: Go 1.26+, Node.js 22+ and the DBX plugin CLI (`npm i -g @dbx-app/plugin-cli`, or use `npx @dbx-app/plugin-cli`).
+Requirements: Go 1.26+ and Node.js 22+.
 
 ```bash
-npm install
-npm run build                          # typecheck + bundle the UI into ui/
+npm install                            # also installs the DBX plugin CLI locally
+npm run package                        # typecheck + bundle UI, build sidecar -> dist/com.astergaze.nats-<version>-<target>.dbxp
+npm run dev                            # browser dev host on :5190 with the real sidecar (rebuilds the UI on change)
 cd backend && go test -race ./...      # unit + integration tests (embedded nats-server)
-dbx-plugin package .                   # dist/com.astergaze.nats-<version>-<target>.dbxp
-dbx-plugin dev --path . --port 5190    # browser dev host with the real sidecar (rebuilds the UI on change)
 ```
 
 ### Try it against a local server
@@ -80,7 +79,7 @@ nats kv add config && nats kv put config feature.dark_mode on
 nats object add assets && nats object put assets ./README.md
 ```
 
-Then either use the dev host, or install into DBX: `dbx-plugin package .`, open DBX → Plugin Center → Settings,
+Then either use the dev host, or install into DBX: `npm run package`, open DBX → Plugin Center → Settings,
 enable development-only unsigned packages, install the `.dbxp`, and create a **NATS** connection to `localhost:4222`.
 
 > **`dbx-plugin dev` and newer Go modules.** CLI 0.1.9's dev host writes a `go.work` declaring `go 1.22`,

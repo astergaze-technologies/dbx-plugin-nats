@@ -5,12 +5,15 @@
   "scripts": {
     "build": "vue-tsc --noEmit && vite build",
     "build:watch": "vite build --watch",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "package": "npm run build && dbx-plugin package .",
+    "dev": "dbx-plugin dev --path . --port 5190"
   },
   "dependencies": {
     "vue": "^3.5.43"
   },
   "devDependencies": {
+    "@dbx-app/plugin-cli": "^0.1.9",
     "@vitejs/plugin-vue": "^6.0.9",
     "typescript": "^6.0.3",
     "vite": "^8.3.1",
