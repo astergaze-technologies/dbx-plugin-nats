@@ -4,29 +4,120 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+# Only the latest run per PR matters; pushes to main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  frontend:
+    name: Frontend checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          go-version: "1.26"
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build # vue-tsc typecheck + Vite bundle into ui/
+
+  backend:
+    name: Go sidecar checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.26.x
           cache-dependency-path: backend/go.sum
-      - name: Vet and test
+      - name: gofmt clean
         working-directory: backend
         run: |
-          test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
-          go vet ./...
-          go test -race ./...
-      - uses: actions/setup-node@v4
+          unformatted="$(gofmt -l main.go internal)"
+          if [ -n "$unformatted" ]; then
+            echo "gofmt needed:" >&2
+            echo "$unformatted" >&2
+            exit 1
+          fi
+      - name: Vet and test (embedded nats-server, JetStream included)
+        working-directory: backend
+        run: go vet ./... && go test -race ./...
+
+  candidate:
+    name: Package candidate (${{ matrix.target }})
+    needs: [frontend, backend]
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: ubuntu-24.04, target: linux-x64 }
+          - { runner: ubuntu-24.04-arm, target: linux-arm64 }
+          - { runner: macos-15, target: darwin-arm64 }
+          - { runner: macos-15-intel, target: darwin-x64 }
+          - { runner: windows-2022, target: windows-x64 }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
-      - name: Typecheck and build UI
-        run: npm ci && npm run build
-      - name: Package candidate (validates manifest)
-        run: npx -y @dbx-app/plugin-cli@0.1.9 package .
+          node-version: "22"
+          cache: npm
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 1.26.x
+          cache-dependency-path: backend/go.sum
+      - run: npm ci
+      # The plugin CLI only builds the sidecar for its host, so each target runs on its own runner.
+      - name: Build and package
+        env:
+          DBX_PLUGIN_TARGET: ${{ matrix.target }}
+          NO_COLOR: "1"
+        run: npm run package
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dbx-plugin-nats-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            dist/*.dbxp
+            dist/*.artifact.json
+
+  candidates-check:
+    name: Cross-target candidate checks
+    needs: [candidate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: dbx-plugin-nats-*
+          path: dist
+          merge-multiple: true
+      - name: Every target packaged once, checksums match
+        run: |
+          node --input-type=module <<'EOF'
+          import { createHash } from "node:crypto";
+          import { readdirSync, readFileSync, statSync } from "node:fs";
+          const expected = ["darwin-arm64", "darwin-x64", "linux-arm64", "linux-x64", "windows-x64"];
+          const meta = readdirSync("dist").filter((f) => f.endsWith(".artifact.json"))
+            .map((f) => JSON.parse(readFileSync(`dist/${f}`, "utf8")));
+          const targets = meta.map((m) => m.target).sort();
+          if (JSON.stringify(targets) !== JSON.stringify(expected)) throw new Error(`targets ${targets} != ${expected}`);
+          for (const m of meta) {
+            const file = `dist/${m.url}`;
+            const sha = createHash("sha256").update(readFileSync(file)).digest("hex");
+            if (sha !== m.sha256 || statSync(file).size !== m.size) throw new Error(`${file}: checksum or size mismatch`);
+            console.log(`ok ${m.target} ${m.size} B ${sha}`);
+          }
+          EOF
