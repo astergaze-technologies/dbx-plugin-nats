@@ -19,8 +19,9 @@ build: ## Typecheck and bundle the UI into ui/
 package: ## Build UI + sidecar into dist/*.dbxp for this machine
 	$(NPM) run package
 
-test: ## Go tests with the race detector (embedded nats-server)
+test: ## Go tests with the race detector (embedded nats-server) + UI unit tests
 	cd backend && go test -race ./...
+	$(NPM) test
 
 lint: ## gofmt check, go vet, UI typecheck
 	@out="$$(cd backend && gofmt -l main.go internal)"; if [ -n "$$out" ]; then echo "gofmt needed:"; echo "$$out"; exit 1; fi
