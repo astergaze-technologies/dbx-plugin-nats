@@ -19,8 +19,8 @@ type StreamSummary struct {
 	Messages  uint64    `json:"messages"`
 	Bytes     uint64    `json:"bytes"`
 	Consumers int       `json:"consumers"`
-	FirstSeq  uint64    `json:"firstSeq"`
-	LastSeq   uint64    `json:"lastSeq"`
+	FirstSeq  uint64    `json:"firstSeq,string"`
+	LastSeq   uint64    `json:"lastSeq,string"`
 	Created   time.Time `json:"created"`
 	// System marks streams that back KV buckets and object stores.
 	System bool `json:"system"`
@@ -200,7 +200,7 @@ func (m *Manager) DeleteStream(ctx context.Context, connectionID, name string) e
 }
 
 type StoredMessage struct {
-	Sequence uint64            `json:"seq"`
+	Sequence uint64            `json:"seq,string"`
 	Subject  string            `json:"subject"`
 	Time     time.Time         `json:"time"`
 	Headers  map[string]string `json:"headers,omitempty"`
@@ -210,7 +210,7 @@ type StoredMessage struct {
 type MessagePage struct {
 	Messages []StoredMessage `json:"messages"`
 	// NextBefore is the `before` value for the next (older) page; 0 when done.
-	NextBefore uint64 `json:"nextBefore"`
+	NextBefore uint64 `json:"nextBefore,omitempty,string"`
 }
 
 const (

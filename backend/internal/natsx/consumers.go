@@ -18,8 +18,8 @@ type ConsumerSummary struct {
 	NumAckPending  int       `json:"numAckPending"`
 	NumRedelivered int       `json:"numRedelivered"`
 	NumWaiting     int       `json:"numWaiting"`
-	DeliveredSeq   uint64    `json:"deliveredSeq"`
-	AckFloorSeq    uint64    `json:"ackFloorSeq"`
+	DeliveredSeq   uint64    `json:"deliveredSeq,string"`
+	AckFloorSeq    uint64    `json:"ackFloorSeq,string"`
 	Created        time.Time `json:"created"`
 }
 

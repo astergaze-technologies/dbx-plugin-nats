@@ -113,7 +113,7 @@ func (m *Manager) Keys(ctx context.Context, connectionID, bucket string) (*KeyLi
 
 type KeyValue struct {
 	Key       string    `json:"key"`
-	Revision  uint64    `json:"revision"`
+	Revision  uint64    `json:"revision,string"`
 	Created   time.Time `json:"created"`
 	Operation string    `json:"operation"`
 	Payload

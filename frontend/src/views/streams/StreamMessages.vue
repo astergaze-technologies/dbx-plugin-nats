@@ -9,17 +9,17 @@ import { confirmAction } from "../../stores/dialogs";
 
 const props = defineProps<{ stream: string }>();
 const messages = ref<StoredMessage[]>([]);
-const nextBefore = ref(0);
+const nextBefore = ref<string>();
 const loading = ref(false);
 const loaded = ref(false);
 const error = ref<unknown>(null);
 
-// Pages newest first; before=0 starts at the last message.
-async function more(before = 0) {
+// Pages newest first; no before starts at the last message.
+async function more(before?: string) {
   loading.value = true;
   error.value = null;
   try {
-    const page = await invoke<{ messages: StoredMessage[]; nextBefore: number }>(
+    const page = await invoke<{ messages: StoredMessage[]; nextBefore?: string }>(
       "nats/streamMessages", { stream: props.stream, before, limit: 50 }, 30000);
     messages.value.push(...page.messages);
     nextBefore.value = page.nextBefore;

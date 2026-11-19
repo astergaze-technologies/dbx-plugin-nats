@@ -36,8 +36,8 @@ export interface StreamSummary {
   messages: number;
   bytes: number;
   consumers: number;
-  firstSeq: number;
-  lastSeq: number;
+  firstSeq: string;
+  lastSeq: string;
   created: string;
   system: boolean;
 }
@@ -47,7 +47,7 @@ export interface StreamDetail extends StreamSummary {
 }
 
 export interface StoredMessage extends Payload {
-  seq: number;
+  seq: string;
   subject: string;
   time: string;
   headers?: Headers;
@@ -62,7 +62,7 @@ export interface Consumer {
   numPending: number;
   numAckPending: number;
   numRedelivered: number;
-  deliveredSeq: number;
+  deliveredSeq: string;
 }
 
 export interface Bucket {
@@ -77,7 +77,7 @@ export interface Bucket {
 
 export interface KeyValue extends Payload {
   key: string;
-  revision: number;
+  revision: string;
   created: string;
   operation: "PUT" | "DEL" | "PURGE";
 }
@@ -140,7 +140,7 @@ export interface KVChange extends KeyValue {
 
 // Anything MessageCard can show.
 export interface MessageLike extends Payload {
-  seq?: number;
+  seq?: string;
   subject?: string;
   headers?: Headers;
   time?: string;

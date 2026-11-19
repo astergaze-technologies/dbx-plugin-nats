@@ -1,6 +1,7 @@
+import { parse, stringify } from "lossless-json";
 import type { Headers, Payload } from "../api/types";
 
-export const num = (n?: number) => Number(n || 0).toLocaleString();
+export const num = (n?: number | string) => (typeof n === "string" ? BigInt(n) : Number(n || 0)).toLocaleString();
 
 export function bytes(n?: number) {
   let v = Number(n || 0);
@@ -20,7 +21,7 @@ export function payloadText(p: Payload) {
   if (p.encoding === "base64") return `[binary, ${bytes(p.size)}] base64:\n${p.data}`;
   let text = p.data;
   try {
-    text = JSON.stringify(JSON.parse(p.data), null, 2);
+    text = stringify(parse(p.data), null, 2) ?? p.data;
   } catch {
     // not JSON
   }

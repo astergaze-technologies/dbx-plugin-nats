@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/astergaze-solutions/dbx-plugin-nats/internal/natsx"
@@ -13,8 +14,8 @@ type params struct {
 	Stream       string            `json:"stream"`
 	Consumer     string            `json:"consumer"`
 	Subject      string            `json:"subject"`
-	Seq          uint64            `json:"seq"`
-	Before       uint64            `json:"before"`
+	Seq          uint64            `json:"seq,string"`
+	Before       uint64            `json:"before,string"`
 	Limit        int               `json:"limit"`
 	Bucket       string            `json:"bucket"`
 	Key          string            `json:"key"`
@@ -117,7 +118,7 @@ func (r *Router) registerKV() {
 		},
 		"nats/kvPut": func(ctx context.Context, p params, _ natsx.Emit) (any, error) {
 			revision, err := m.Put(ctx, p.ConnectionID, p.Bucket, p.Key, []byte(p.Data))
-			return map[string]any{"revision": revision}, err
+			return map[string]any{"revision": strconv.FormatUint(revision, 10)}, err
 		},
 		"nats/kvDelete": func(ctx context.Context, p params, _ natsx.Emit) (any, error) {
 			return ok(m.DeleteKey(ctx, p.ConnectionID, p.Bucket, p.Key, p.Purge))

@@ -33,7 +33,7 @@ const visible = computed(() => {
     .filter((row) => !q || props.columns.some((c) => String(valueOf(c, row) ?? "").toLowerCase().includes(q)))
     .sort((a, b) => {
       const [x, y] = [valueOf(col, a), valueOf(col, b)];
-      const cmp = typeof x === "number" && typeof y === "number" ? x - y : String(x ?? "").localeCompare(String(y ?? ""));
+      const cmp = typeof x === "number" && typeof y === "number" ? x - y : String(x ?? "").localeCompare(String(y ?? ""), undefined, { numeric: true });
       return sort.value.desc ? -cmp : cmp;
     });
 });

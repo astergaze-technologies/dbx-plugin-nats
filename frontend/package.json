@@ -6,10 +6,12 @@
     "build": "vue-tsc --noEmit && vite build",
     "build:watch": "vite build --watch",
     "typecheck": "vue-tsc --noEmit",
+    "test": "node --test \"src/**/*.test.ts\"",
     "package": "npm run build && dbx-plugin package ..",
     "dev": "node dev.mjs"
   },
   "dependencies": {
+    "lossless-json": "4.3.4",
     "vue": "^3.5.43"
   },
   "devDependencies": {
