@@ -21,6 +21,12 @@ jobs:
             echo "::error::release tag $TAG does not match manifest.json version $want"
             exit 1
           fi
+          # ponytail: plugin CLI builds the sidecar, so no ldflags; keep main.go in sync by hand
+          got="v$(sed -n 's/^var version = "\(.*\)"$/\1/p' backend/main.go)"
+          if [ "$got" != "$want" ]; then
+            echo "::error::backend/main.go version $got does not match manifest.json version $want"
+            exit 1
+          fi
 
   release:
     needs: version
