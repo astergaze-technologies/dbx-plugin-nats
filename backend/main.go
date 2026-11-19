@@ -15,7 +15,7 @@ import (
 )
 
 // version must match manifest.json; DBX rejects a mismatched sidecar identity.
-var version = "0.1.0"
+var version = "0.1.1"
 
 const pluginID = "com.astergaze.nats"
 
