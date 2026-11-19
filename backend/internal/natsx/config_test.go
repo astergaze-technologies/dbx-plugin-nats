@@ -3,10 +3,13 @@ package natsx
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/nats-io/nats-server/v2/server"
+	"github.com/nats-io/nkeys"
 )
 
 func TestAuthModes(t *testing.T) {
@@ -35,6 +38,81 @@ func TestAuthModes(t *testing.T) {
 	}
 	if _, err := (Config{Auth: AuthCreds}).options(); err == nil {
 		t.Fatal("creds auth without a file must fail")
+	}
+
+}
+
+func TestNKeyAuth(t *testing.T) {
+	user, _ := nkeys.CreateUser()
+	pub, _ := user.PublicKey()
+	seedBytes, _ := user.Seed()
+	seed := string(seedBytes)
+	srv := runServer(t, func(o *server.Options) { o.Nkeys = []*server.NkeyUser{{Nkey: pub}} })
+
+	dir := t.TempDir()
+	writeFile := func(name, body string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return p
+	}
+	stranger, _ := nkeys.CreateUser()
+	strangerSeed, _ := stranger.Seed()
+	acct, _ := nkeys.CreateAccount()
+	acctSeed, _ := acct.Seed()
+	decorated := "-----BEGIN USER NKEY SEED-----\n" + seed + "\n------END USER NKEY SEED------\n"
+
+	ok := []struct {
+		name       string
+		seed, path string
+	}{
+		{"pasted seed", seed, ""},
+		{"pasted seed with whitespace", "  " + seed + "\n", ""},
+		{"decorated seed", decorated, ""},
+		{"seed file", "", writeFile("user.nk", seed+"\n")},
+		{"pasted wins over file", seed, filepath.Join(dir, "missing.nk")},
+	}
+	for _, c := range ok {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := srv
+			cfg.Auth, cfg.NKeySeed, cfg.NKeyPath = AuthNKey, c.seed, c.path
+			if _, err := Test(cfg); err != nil {
+				t.Fatalf("nkey auth: %v", err)
+			}
+		})
+	}
+
+	fail := []struct {
+		name       string
+		seed, path string
+		online     bool // reaches the server rather than failing locally
+	}{
+		{"no seed", "", "", false},
+		{"whitespace-only seed", " \n", "", false},
+		{"empty file", "", writeFile("empty.nk", "\n"), false},
+		{"missing file", "", filepath.Join(dir, "missing.nk"), false},
+		{"garbage", "not-a-seed", "", false},
+		{"account seed", string(acctSeed), "", false},
+		{"public key instead of seed", pub, "", false},
+		{"unknown user", string(strangerSeed), "", true},
+	}
+	for _, c := range fail {
+		t.Run(c.name, func(t *testing.T) {
+			cfg := srv
+			cfg.Auth, cfg.NKeySeed, cfg.NKeyPath = AuthNKey, c.seed, c.path
+			_, optErr := cfg.options()
+			if (optErr == nil) != c.online {
+				t.Fatalf("options() err = %v, want local failure=%v", optErr, !c.online)
+			}
+			_, err := Test(cfg)
+			if err == nil {
+				t.Fatal("expected failure")
+			}
+			if c.seed != "" && strings.Contains(err.Error(), c.seed) {
+				t.Fatalf("error leaks the seed: %v", err)
+			}
+		})
 	}
 }
 

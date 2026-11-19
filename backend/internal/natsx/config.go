@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/nats-io/jwt/v2"
@@ -20,6 +21,7 @@ const (
 	AuthPassword = "password"
 	AuthToken    = "token"
 	AuthCreds    = "creds"
+	AuthNKey     = "nkey"
 )
 
 type Config struct {
@@ -32,6 +34,8 @@ type Config struct {
 	Token       string
 	Creds       string
 	CredsPath   string
+	NKeySeed    string
+	NKeyPath    string
 	TLS         bool
 	TLSInsecure bool
 	Timeout     time.Duration
@@ -92,6 +96,8 @@ func (c Config) authOption() (nats.Option, error) {
 		return nats.Token(c.Token), nil
 	case AuthCreds:
 		return c.credsOption()
+	case AuthNKey:
+		return c.nkeyOption()
 	}
 	return nil, fmt.Errorf("unknown authentication mode %q", c.Auth)
 }
@@ -120,6 +126,33 @@ func (c Config) credsOption() (nats.Option, error) {
 		func() (string, error) { return userJWT, nil },
 		func(nonce []byte) ([]byte, error) { return keyPair.Sign(nonce) },
 	), nil
+}
+
+func (c Config) nkeyOption() (nats.Option, error) {
+	seed := strings.TrimSpace(c.NKeySeed)
+	if seed == "" && c.NKeyPath != "" {
+		data, err := os.ReadFile(c.NKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("read nkey seed file: %w", err)
+		}
+		seed = strings.TrimSpace(string(data))
+	}
+	if seed == "" {
+		return nil, errors.New("a user seed is required for NKey authentication")
+	}
+	// Accepts a bare SU... seed or a decorated seed block (e.g. from nsc).
+	keyPair, err := nkeys.ParseDecoratedNKey([]byte(seed))
+	if err != nil {
+		return nil, errors.New("nkey seed is not valid")
+	}
+	if seedBytes, err := keyPair.Seed(); err != nil || !strings.HasPrefix(string(seedBytes), "SU") {
+		return nil, errors.New("nkey seed must be a user seed (SU...)")
+	}
+	pub, err := keyPair.PublicKey()
+	if err != nil {
+		return nil, errors.New("nkey seed is not valid")
+	}
+	return nats.Nkey(pub, keyPair.Sign), nil
 }
 
 func Dial(c Config) (*nats.Conn, error) {

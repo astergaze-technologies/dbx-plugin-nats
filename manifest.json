@@ -79,6 +79,10 @@
             {
               "label": "Credentials file",
               "value": "creds"
+            },
+            {
+              "label": "NKey",
+              "value": "nkey"
             }
           ]
         },
@@ -146,6 +150,34 @@
           "visible_when": {
             "field": "auth",
             "one_of": ["creds"]
+          }
+        },
+        {
+          "key": "nkey_path",
+          "label": "NKey seed file",
+          "type": "text",
+          "binding": "config",
+          "placeholder": "~/.nats/user.nk",
+          "description": "File holding a NATS user NKey seed (SU...).",
+          "picker": {
+            "kind": "file",
+            "accept": [".nk", ".seed", ".txt"],
+            "content_field": "nkey_seed"
+          },
+          "visible_when": {
+            "field": "auth",
+            "one_of": ["nkey"]
+          }
+        },
+        {
+          "key": "nkey_seed",
+          "label": "NKey seed",
+          "type": "password",
+          "binding": "secret",
+          "description": "Filled automatically from the file; you can also paste the SU... seed here.",
+          "visible_when": {
+            "field": "auth",
+            "one_of": ["nkey"]
           }
         },
         {
@@ -220,7 +252,8 @@
                 "none": "无",
                 "password": "用户名 / 密码",
                 "token": "令牌",
-                "creds": "凭据文件"
+                "creds": "凭据文件",
+                "nkey": "NKey"
               }
             },
             "username": {
@@ -239,6 +272,14 @@
             "creds": {
               "label": "凭据内容",
               "description": "浏览器中会自动填写；也可以直接粘贴 .creds 内容。"
+            },
+            "nkey_path": {
+              "label": "NKey 种子文件",
+              "description": "包含 NATS 用户 NKey 种子（SU...）的文件。"
+            },
+            "nkey_seed": {
+              "label": "NKey 种子",
+              "description": "从文件自动填写；也可以直接粘贴 SU... 种子。"
             },
             "tls": {
               "label": "使用 TLS"
