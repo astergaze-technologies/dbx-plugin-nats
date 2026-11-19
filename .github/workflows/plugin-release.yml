@@ -8,7 +8,22 @@ permissions:
   contents: write
 
 jobs:
+  version:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Tag must match manifest.json version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          want="v$(jq -r .version manifest.json)"
+          if [ "$TAG" != "$want" ]; then
+            echo "::error::release tag $TAG does not match manifest.json version $want"
+            exit 1
+          fi
+
   release:
+    needs: version
     uses: t8y2/dbx/.github/workflows/plugin-release-reusable.yml@plugin-cli-v0.1.9
     with:
       release-tag: ${{ github.event.release.tag_name }}
