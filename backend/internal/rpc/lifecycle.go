@@ -42,6 +42,8 @@ func (p lifecycleParams) config() (natsx.Config, error) {
 		Token:       c.ConnectionSecrets["token"],
 		Creds:       c.ConnectionSecrets["creds"],
 		CredsPath:   stringValue(c.ExternalConfig, "creds_path", ""),
+		NKeySeed:    c.ConnectionSecrets["nkey_seed"],
+		NKeyPath:    stringValue(c.ExternalConfig, "nkey_path", ""),
 		TLS:         boolValue(c.ExternalConfig, "tls"),
 		TLSInsecure: boolValue(c.ExternalConfig, "tls_insecure"),
 		Timeout:     time.Duration(intValue(c.ExternalConfig, "connect_timeout_secs", 10)) * time.Second,

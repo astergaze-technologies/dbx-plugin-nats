@@ -53,6 +53,13 @@ func TestLifecycleConfig(t *testing.T) {
 	if cfg, err := fallback.config(); err != nil || cfg.Host != "localhost" || cfg.Auth != natsx.AuthNone {
 		t.Fatalf("defaults = %+v, %v", cfg, err)
 	}
+	var nk lifecycleParams
+	_ = json.Unmarshal([]byte(`{"connection":{"id":"c","host":"h","port":4222,
+		"external_config": {"auth": "nkey", "nkey_path": "/keys/user.nk"},
+		"connection_secrets": {"nkey_seed": "SUABC"}}}`), &nk)
+	if cfg, err := nk.config(); err != nil || cfg.Auth != natsx.AuthNKey || cfg.NKeySeed != "SUABC" || cfg.NKeyPath != "/keys/user.nk" {
+		t.Fatalf("nkey config = %+v, %v", cfg, err)
+	}
 	var bad lifecycleParams
 	_ = json.Unmarshal([]byte(`{"connection":{"id":"c","host":"h","port":0}}`), &bad)
 	if _, err := bad.config(); err == nil {

@@ -25,11 +25,11 @@ Streams backing KV buckets and object stores (`KV_*`, `OBJ_*`) are hidden unless
 ### Connection options
 
 - Host / port (DBX SSH tunnels and proxies are honoured — the sidecar dials the endpoint DBX hands it)
-- Authentication: none, user/password, token, or a `.creds` file (JWT + seed)
+- Authentication: none, user/password, token, a `.creds` file (JWT + seed), or an NKey user seed
 - TLS, with an optional "skip verification" for self-signed test servers
 - Connect timeout; DBX's read-only flag is enforced by the sidecar
 
-Passwords, tokens and credentials are stored in DBX's secret store, never in the connection JSON.
+Passwords, tokens, credentials and NKey seeds are stored in DBX's secret store, never in the connection JSON.
 
 ### Limits (deliberate)
 
