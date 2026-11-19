@@ -1,13 +1,18 @@
 package rpc
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net"
+	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
 	natsserver "github.com/nats-io/nats-server/v2/test"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 
 	"github.com/astergaze-solutions/dbx-plugin-nats/internal/natsx"
 )
@@ -75,6 +80,12 @@ func TestRouterErrors(t *testing.T) {
 
 func connectedRouter(t *testing.T, readOnly bool) *Router {
 	t.Helper()
+	r, _ := connectedRouterURL(t, readOnly)
+	return r
+}
+
+func connectedRouterURL(t *testing.T, readOnly bool) (*Router, string) {
+	t.Helper()
 	opts := natsserver.DefaultTestOptions
 	opts.Port, opts.JetStream, opts.StoreDir = -1, true, t.TempDir()
 	srv := natsserver.RunServer(&opts)
@@ -88,7 +99,88 @@ func connectedRouter(t *testing.T, readOnly bool) *Router {
 	if res, err := call(t, r, "connection/connect", lifecycle); err != nil || res["success"] != true {
 		t.Fatalf("connect: %+v %+v", res, err)
 	}
-	return r
+	return r, srv.ClientURL()
+}
+
+// Sequences past 2^53 must cross the bridge as strings or JS rounds them.
+func TestSequencesBeyondFloat64Precision(t *testing.T) {
+	r, url := connectedRouterURL(t, false)
+	const first = uint64(1)<<60 + 1
+	seqStr := func(n uint64) string { return strconv.FormatUint(n, 10) }
+
+	nc, err := nats.Connect(url)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer nc.Close()
+	js, _ := jetstream.New(nc)
+	ctx := context.Background()
+	if _, err := js.CreateStream(ctx, jetstream.StreamConfig{Name: "BIG", Subjects: []string{"big.>"}, FirstSeq: first}); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		if _, err := js.Publish(ctx, "big.x", []byte(`{"n":`+strconv.Itoa(i)+`}`)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := js.CreateConsumer(ctx, "BIG", jetstream.ConsumerConfig{Durable: "d"}); err != nil {
+		t.Fatal(err)
+	}
+	with := func(extra map[string]any) map[string]any {
+		extra["connectionId"] = "c1"
+		return extra
+	}
+	seqs := func(page map[string]any) (out []any) {
+		for _, m := range page["messages"].([]any) {
+			out = append(out, m.(map[string]any)["seq"])
+		}
+		return out
+	}
+
+	detail, rpcErr := call(t, r, "nats/stream", with(map[string]any{"stream": "BIG"}))
+	if rpcErr != nil || detail["firstSeq"] != seqStr(first) || detail["lastSeq"] != seqStr(first+2) {
+		t.Fatalf("stream detail = %+v %+v", detail, rpcErr)
+	}
+
+	page, rpcErr := call(t, r, "nats/streamMessages", with(map[string]any{"stream": "BIG", "limit": 2}))
+	if rpcErr != nil || !reflect.DeepEqual(seqs(page), []any{seqStr(first + 2), seqStr(first + 1)}) {
+		t.Fatalf("page = %+v %+v", page, rpcErr)
+	}
+	next, rpcErr := call(t, r, "nats/streamMessages", with(map[string]any{"stream": "BIG", "limit": 2, "before": page["nextBefore"]}))
+	if rpcErr != nil || !reflect.DeepEqual(seqs(next), []any{seqStr(first)}) {
+		t.Fatalf("older page = %+v %+v", next, rpcErr)
+	}
+	if _, ok := next["nextBefore"]; ok {
+		t.Fatalf("last page must omit nextBefore, got %v", next["nextBefore"])
+	}
+
+	if _, rpcErr := call(t, r, "nats/messageDelete", with(map[string]any{"stream": "BIG", "seq": seqStr(first + 1)})); rpcErr != nil {
+		t.Fatal(rpcErr.Message)
+	}
+	after, _ := call(t, r, "nats/streamMessages", with(map[string]any{"stream": "BIG"}))
+	if !reflect.DeepEqual(seqs(after), []any{seqStr(first + 2), seqStr(first)}) {
+		t.Fatalf("after delete = %+v (exactly seq %d must be gone)", seqs(after), first+1)
+	}
+
+	consumers, rpcErr := call(t, r, "nats/consumers", with(map[string]any{"stream": "BIG"}))
+	if rpcErr != nil {
+		t.Fatal(rpcErr.Message)
+	}
+	if c := consumers["consumers"].([]any)[0].(map[string]any); c["deliveredSeq"] != seqStr(first-1) || c["ackFloorSeq"] != seqStr(first-1) {
+		t.Fatalf("consumer seqs must be strings: %+v", c)
+	}
+
+	if _, rpcErr := call(t, r, "nats/kvBucketCreate", with(map[string]any{"bucketSpec": map[string]any{"bucket": "cfg"}})); rpcErr != nil {
+		t.Fatal(rpcErr.Message)
+	}
+	put, rpcErr := call(t, r, "nats/kvPut", with(map[string]any{"bucket": "cfg", "key": "k", "data": "v"}))
+	if rpcErr != nil || put["revision"] != "1" {
+		t.Fatalf("kvPut = %+v %+v", put, rpcErr)
+	}
+	got, rpcErr := call(t, r, "nats/kvGet", with(map[string]any{"bucket": "cfg", "key": "k"}))
+	if rpcErr != nil || got["revision"] != "1" {
+		t.Fatalf("kvGet = %+v %+v", got, rpcErr)
+	}
 }
 
 func TestReadOnlyCode(t *testing.T) {

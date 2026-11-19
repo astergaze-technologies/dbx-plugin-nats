@@ -43,6 +43,7 @@ async function remove(c: Consumer) {
     <template #numPending="{ row }">{{ num(row.numPending) }}</template>
     <template #numAckPending="{ row }">{{ num(row.numAckPending) }}</template>
     <template #numRedelivered="{ row }">{{ num(row.numRedelivered) }}</template>
+    <template #deliveredSeq="{ row }">{{ num(row.deliveredSeq) }}</template>
     <template #actions="{ row }">
       <IconButton icon="trash" :label="`Delete consumer ${row.name}`" danger write @click="remove(row)" />
     </template>
